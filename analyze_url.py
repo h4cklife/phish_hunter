@@ -13,8 +13,9 @@ if __name__ == "__main__":
                         description='Analyze a URL for debugging the Phish Hunter ML AI')
 
     parser.add_argument('-u', '--url')      # option that takes a value
-    parser.add_argument('-a', '--array', action='store_true')      # option that takes a value
-    parser.add_argument('-d', '--dict', action='store_true')      # option that takes a value
+    parser.add_argument('-a', '--array', action='store_true')
+    parser.add_argument('-d', '--dict', action='store_true')
+    parser.add_argument('-s', '--source', action='store_true')
 
     args = parser.parse_args()
 
@@ -32,6 +33,9 @@ if __name__ == "__main__":
     elif args.dict:
         fe = FeatureExtraction(args.url)
         print(json.dumps(fe.getFeaturesDict(), indent=4))
+    elif args.source:
+        fe = FeatureExtraction(args.url)
+        print(fe.getPageSource())
     else:
         fe = FeatureExtraction(args.url)
         print(json.dumps(fe.getFeaturesDict(), indent=4))

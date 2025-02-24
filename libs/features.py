@@ -161,6 +161,15 @@ class FeatureExtraction:
             self.web_traffic()
         ]
 
+    def getPageSource(self):
+        """
+        Return the requested URLs source
+
+        :return:
+
+        """
+        return self.soup
+
     def append_dataset(self, filename=None, new_row=None):
         """
         Adds a new row to a CSV file.
@@ -168,6 +177,7 @@ class FeatureExtraction:
         Args:
             filename (str): The name of the CSV file.
             new_row (list): A list representing the new row to add.
+            
         """
         try:
             with open(filename, 'a', newline='\n') as file:

@@ -24,6 +24,8 @@ import pickle
 
 import argparse
 
+from terminaltexteffects.effects.effect_decrypt import Decrypt
+
 parser = argparse.ArgumentParser(
                     prog='analyze_url',
                     description='Analyze a URL for debugging the Phish Hunter ML AI')
@@ -31,8 +33,25 @@ parser = argparse.ArgumentParser(
 parser.add_argument('-d', '--dataset')      # dataset for training the ai model # 'new_dataset.csv'
 parser.add_argument('-o', '--dot')          # dot file  #'tree.dot'
 parser.add_argument('-m', '--matrix')      # confusion matrix  #'confusion_matrix.png'
+parser.add_argument('-b', '--banner', action='store_true')
 
 args = parser.parse_args()
+
+if args.banner:
+    effect = Decrypt("""
+#############################################################################################################################
+░▒▓████████▓▒░░▒▓███████▓▒░  ░▒▓██████▓▒░ ░▒▓█▓▒░░▒▓███████▓▒░ ░▒▓█▓▒░░▒▓███████▓▒░  ░▒▓██████▓▒░        ░▒▓██████▓▒░ ░▒▓█▓▒░ 
+   ░▒▓█▓▒░    ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+   ░▒▓█▓▒░    ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░             ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+   ░▒▓█▓▒░    ░▒▓███████▓▒░ ░▒▓████████▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒▒▓███▓▒░      ░▒▓████████▓▒░░▒▓█▓▒░ 
+   ░▒▓█▓▒░    ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+   ░▒▓█▓▒░    ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
+   ░▒▓█▓▒░    ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ ░▒▓██████▓▒░       ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░
+#############################################################################################################################
+            """)
+    with effect.terminal_output() as terminal:
+        for frame in effect:
+            terminal.print(frame)
 
 if args.dataset is None:
     parser.print_help()
@@ -46,8 +65,6 @@ if args.matrix is None:
     parser.print_help()
     sys.exit(1)
 
-print("\n")
-print("#################################################################################################")
 print("[+] Staring Phish Hunter AI Training Mode...")
 
 print("[+] Loading the dataset...")
@@ -89,4 +106,4 @@ print("[+] Saving the model to file for later use...")
 with open('decision_tree_model.pkl', 'wb') as file:
     pickle.dump(model, file)
 
-print("[+] DONE!")
+print("[+] DONE!\n")

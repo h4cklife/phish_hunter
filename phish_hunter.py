@@ -8,7 +8,7 @@ from libs.predictor import Predictor
 from libs.features_v1 import FeatureExtractionV1
 from time import sleep
 from terminaltexteffects.effects.effect_print import Print
-from libs.data_utils import colors, blacklist_chars, get_dns_records, get_host_domain, get_root_domain, is_domain_on_hold, write_to_file
+from libs.data_utils import colors, get_dns_records, get_host_domain, get_root_domain, is_domain_on_hold, write_to_file
 
 warnings.filterwarnings("ignore")
 

@@ -10,7 +10,7 @@ import argparse
 #import unicodedata
 import kagglehub
 #import keyboard
-from libs.data_utils import colors, blacklist_chars, get_dns_records, get_host_domain, get_root_domain, is_domain_on_hold, write_to_file
+from libs.data_utils import colors, get_dns_records, get_host_domain, get_root_domain, is_domain_on_hold, write_to_file
 from terminaltexteffects.effects.effect_print import Print
 
 warnings.filterwarnings("ignore")
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--limit', help='Limit the number of phish and non-phish results to use. i.e. 50 = 100')
     parser.add_argument('-i', '--input', help='The csv filename containing url,status')
     parser.add_argument('-o', '--output', help='The csv filename to output the dataset to', required=True)
-    parser.add_argument('-a', '--append', help='Append to the output file. Don\'t write the header row')
+    parser.add_argument('-a', '--append', action='store_true', help='Append to the output file. Don\'t write the header row')
     parser.add_argument('-d', '--download', action='store_true', help='Downloads lists from kagglehub and prints the paths')
     parser.add_argument('-nb', '--no_banner', action='store_true', help='No banner at startup')
     args = parser.parse_args()
@@ -84,9 +84,8 @@ if __name__ == "__main__":
     with open(f"{args.input}", 'r') as csv_file:
         csv_lines = csv_file.readlines()
         for line in csv_lines:
-            for char in blacklist_chars:
-                if char in line:
-                    continue
+            if not line.isascii():
+                continue
 
             line = line.strip()
             split_line = line.split(',')
@@ -95,7 +94,7 @@ if __name__ == "__main__":
             if len(split_line) <= 1:
                 continue
 
-            # Lines that continue URLs with commas in them
+            # Continue when URLs have commas in them that are breaking the csv/url
             if len(split_line) >= 3:
                 continue
 

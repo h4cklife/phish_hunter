@@ -1,3 +1,7 @@
 venv
 __pycache__
 libs/__pycache__
+tools/*
+datasets/*
+snippets.py
+tmp/*

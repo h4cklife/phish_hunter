@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import sys
 from libs.predictor import Predictor
-from libs.features import FeatureExtraction
+from libs.features_v1 import FeatureExtractionV1
 import json
 import argparse
 
@@ -28,15 +28,15 @@ if __name__ == "__main__":
     print(f"Length of URL: {len(args.url)} : {args.url}")
 
     if args.array:
-        fe = FeatureExtraction(args.url)
+        fe = FeatureExtractionV1(args.url)
         print(fe.getFeaturesArray())
     elif args.dict:
-        fe = FeatureExtraction(args.url)
+        fe = FeatureExtractionV1(args.url)
         print(json.dumps(fe.getFeaturesDict(), indent=4))
     elif args.source:
-        fe = FeatureExtraction(args.url)
+        fe = FeatureExtractionV1(args.url)
         print(fe.getPageSource())
     else:
-        fe = FeatureExtraction(args.url)
+        fe = FeatureExtractionV1(args.url)
         print(json.dumps(fe.getFeaturesDict(), indent=4))
 

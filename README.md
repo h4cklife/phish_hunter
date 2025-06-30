@@ -60,6 +60,37 @@ If you haven't already, make sure you are in your environment.
 $ source venv/bin/activate
 ```
 
+## Create A Dataset
+
+```bash
+$ python create_phish_hunter_csv.py -l 25 -i new_data_urls.csv -o dataset.csv
+
+             ▄▄▄· ▄ .▄▪  .▄▄ ·  ▄ .▄     ▄ .▄▄• ▄▌ ▐ ▄ ▄▄▄▄▄▄▄▄ .▄▄▄
+            ▐█ ▄███▪▐███ ▐█ ▀. ██▪▐█    ██▪▐██▪██▌•█▌▐█•██  ▀▄.▀·▀▄ █·
+             ██▀·██▀▐█▐█·▄▀▀▀█▄██▀▐█    ██▀▐██▌▐█▌▐█▐▐▌ ▐█.▪▐▀▀▪▄▐▀▀▄
+            ▐█▪·•██▌▐▀▐█▌▐█▄▪▐███▌▐▀    ██▌▐▀▐█▄█▌██▐█▌ ▐█▌·▐█▄▄▌▐█•█▌
+            .▀   ▀▀▀ ·▀▀▀ ▀▀▀▀ ▀▀▀ ·    ▀▀▀ · ▀▀▀ ▀▀ █▪ ▀▀▀  ▀▀▀ .▀  ▀
+·▄▄▄▄   ▄▄▄· ▄▄▄▄▄ ▄▄▄· .▄▄ · ▄▄▄ .▄▄▄▄▄     ▄▄· ▄▄▄  ▄▄▄ . ▄▄▄· ▄▄▄▄▄      ▄▄▄
+██▪ ██ ▐█ ▀█ •██  ▐█ ▀█ ▐█ ▀. ▀▄.▀·•██      ▐█ ▌▪▀▄ █·▀▄.▀·▐█ ▀█ •██  ▪     ▀▄ █·
+▐█· ▐█▌▄█▀▀█  ▐█.▪▄█▀▀█ ▄▀▀▀█▄▐▀▀▪▄ ▐█.▪    ██ ▄▄▐▀▀▄ ▐▀▀▪▄▄█▀▀█  ▐█.▪ ▄█▀▄ ▐▀▀▄
+██. ██ ▐█ ▪▐▌ ▐█▌·▐█ ▪▐▌▐█▄▪▐█▐█▄▄▌ ▐█▌·    ▐███▌▐█•█▌▐█▄▄▌▐█ ▪▐▌ ▐█▌·▐█▌.▐▌▐█•█▌
+▀▀▀▀▀•  ▀  ▀  ▀▀▀  ▀  ▀  ▀▀▀▀  ▀▀▀  ▀▀▀     ·▀▀▀ .▀  ▀ ▀▀▀  ▀  ▀  ▀▀▀  ▀█▄▀▪.▀  ▀
+  \_____)\_____
+  /--v____ __`<  Phish hunter Artifical Intelligence version 1.00
+          )/
+          '
+
+Loading input data for phish/legitimate website urls...
+Creating the Phish Hunter dataset...
+Loading 394561 phishing URLs...
+Loading 426754 non-phishing URLs...
+Processing phish URL : ...
+...
+...
+...
+Phish Hunter's AI Training Data file 'dataset.csv' has been written successfully.
+```
+
 
 ## Train the AI Model
 
@@ -81,11 +112,25 @@ options:
 Unless you have renamed the dataset, the command below will work right off the rip of a git clone of this repository.
 
 ```bash
-$ python train_phish_hunter.py -d new_dataset.csv -o tree.dot -m confusion_matrix.png
+$ python train_phish_hunter.py -d dataset.csv -o tree.dot -m confusion_matrix.png
 
+              ▄▄▄▄▄▄▄▄   ▄▄▄· ▪   ▐ ▄ ▪   ▐ ▄  ▄▄ •
+              •██  ▀▄ █·▐█ ▀█ ██ •█▌▐███ •█▌▐█▐█ ▀ ▪
+               ▐█.▪▐▀▀▄ ▄█▀▀█ ▐█·▐█▐▐▌▐█·▐█▐▐▌▄█ ▀█▄
+               ▐█▌·▐█•█▌▐█ ▪▐▌▐█▌██▐█▌▐█▌██▐█▌▐█▄▪▐█
+               ▀▀▀ .▀  ▀ ▀  ▀ ▀▀▀▀▀ █▪▀▀▀▀▀ █▪·▀▀▀▀
+    ▄▄▄· ▄ .▄▪  .▄▄ ·  ▄ .▄     ▄ .▄▄• ▄▌ ▐ ▄ ▄▄▄▄▄▄▄▄ .▄▄▄
+   ▐█ ▄███▪▐███ ▐█ ▀. ██▪▐█    ██▪▐██▪██▌•█▌▐█•██  ▀▄.▀·▀▄ █·
+    ██▀·██▀▐█▐█·▄▀▀▀█▄██▀▐█    ██▀▐██▌▐█▌▐█▐▐▌ ▐█.▪▐▀▀▪▄▐▀▀▄
+   ▐█▪·•██▌▐▀▐█▌▐█▄▪▐███▌▐▀    ██▌▐▀▐█▄█▌██▐█▌ ▐█▌·▐█▄▄▌▐█•█▌
+   .▀   ▀▀▀ ·▀▀▀ ▀▀▀▀ ▀▀▀ ·    ▀▀▀ · ▀▀▀ ▀▀ █▪ ▀▀▀  ▀▀▀ .▀  ▀
+\_____)\_____
+ /--v____ __`<  Phish hunter Artifical Intelligence version 1.00
+         )/
+         '
 
-#################################################################################################
 [+] Staring Phish Hunter AI Training Mode...
+[+] Loading the dataset...
 [+] Splitting data into Train and Test data...
 [+] Creating Model Decision Tree Classifier...
 [+] Fitting data and training the Model...
@@ -93,14 +138,14 @@ $ python train_phish_hunter.py -d new_dataset.csv -o tree.dot -m confusion_matri
 
               precision    recall  f1-score   support
 
-          -1       0.93      0.96      0.95      1209
-           1       0.97      0.94      0.96      1555
+          -1       1.00      0.75      0.86         8
+           1       0.71      1.00      0.83         5
 
-    accuracy                           0.95      2764
-   macro avg       0.95      0.95      0.95      2764
-weighted avg       0.95      0.95      0.95      2764
+    accuracy                           0.85        13
+   macro avg       0.86      0.88      0.85        13
+weighted avg       0.89      0.85      0.85        13
 
-Accuracy Score: 95.0 %
+Accuracy Score: 85.0 %
 
 [+] Saving Confusion Matrix...
 [+] Saving dot file...

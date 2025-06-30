@@ -1,7 +1,12 @@
 #!venv/bin/python
 # -*- coding: utf-8 -*-
+
+# TODO Exclude a column when training for a label column
+
 import os
 import sys
+import warnings
+
 # To perform operations on dataset
 import pandas as pd
 import numpy as np
@@ -24,7 +29,9 @@ import pickle
 
 import argparse
 
-from terminaltexteffects.effects.effect_decrypt import Decrypt
+from terminaltexteffects.effects.effect_print import Print
+
+warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser(
                     prog='analyze_url',
@@ -33,21 +40,16 @@ parser = argparse.ArgumentParser(
 parser.add_argument('-d', '--dataset')      # dataset for training the ai model # 'new_dataset.csv'
 parser.add_argument('-o', '--dot')          # dot file  #'tree.dot'
 parser.add_argument('-m', '--matrix')      # confusion matrix  #'confusion_matrix.png'
-parser.add_argument('-b', '--banner', action='store_true')
+parser.add_argument('-nb', '--no_banner', action='store_true')
 
 args = parser.parse_args()
 
-if args.banner:
-    effect = Decrypt("""
-#############################################################################################################################
-░▒▓████████▓▒░░▒▓███████▓▒░  ░▒▓██████▓▒░ ░▒▓█▓▒░░▒▓███████▓▒░ ░▒▓█▓▒░░▒▓███████▓▒░  ░▒▓██████▓▒░        ░▒▓██████▓▒░ ░▒▓█▓▒░ 
-   ░▒▓█▓▒░    ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
-   ░▒▓█▓▒░    ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░             ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
-   ░▒▓█▓▒░    ░▒▓███████▓▒░ ░▒▓████████▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒▒▓███▓▒░      ░▒▓████████▓▒░░▒▓█▓▒░ 
-   ░▒▓█▓▒░    ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
-   ░▒▓█▓▒░    ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ 
-   ░▒▓█▓▒░    ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░ ░▒▓██████▓▒░       ░▒▓█▓▒░░▒▓█▓▒░░▒▓█▓▒░
-#############################################################################################################################
+if not args.no_banner:
+    effect = Print("""
+\\_____)\\_____
+ /--v____ __`<  Phish Hunter Artifical Intelligence version 1.00        
+         )/     Training Phish Hunter  
+         '
             """)
     with effect.terminal_output() as terminal:
         for frame in effect:
@@ -92,7 +94,7 @@ print("\n[+] Saving Confusion Matrix...")
 mat = confusion_matrix(ytest, ypred)
 sns.heatmap(mat.T, square=True, annot=True, fmt='d', cbar=False)
 plt.xlabel('true label')
-plt.ylabel('predicted label');
+plt.ylabel('predicted label')
 plt.savefig(confusion_matrix_file)
 
 print("[+] Saving dot file...")

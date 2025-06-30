@@ -32,23 +32,34 @@
 # -1 if the URL is Legitimate and
 # 0 if the URL is Suspicious
 
+import uuid
 import re
 import csv
 import whois
 import datetime
 import requests
 import ipaddress
+import pytesseract
+import cv2 
+import numpy as np
 from dns import resolver
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urlencode
 from thlibs.sslchecker import SSLChecker
+from PIL import Image, ExifTags
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from skimage.metrics import structural_similarity as ssim
+from libs.data_utils import get_target_and_legit_screenshots, get_target_screenshot, compare_images, get_grayscale, get_dns_records, get_host_domain, get_root_domain, is_domain_on_hold
+from time import sleep
 
-
-class FeatureExtraction:
+class FeatureExtractionV1:
     def __init__(self, url):
         self.url = url
         self.parsedurl = urlparse(self.url)
         self.domain = self.parsedurl.netloc
+        self.scheme = self.parsedurl.scheme
 
         self.user_agent = "Mozilla/5.0 (X11; CrOS x86_64 12871.102.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.141 Safari/537.36" #'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
         self.headers = {'User-Agent': self.user_agent}
@@ -75,8 +86,24 @@ class FeatureExtraction:
             self.request = None
             self.soup = None
 
+        try:
+            if self.is_online():
+                # TODO
+                # Implement offical website's url
+                self.screenshot = None
+                self.offical_screenshot = None
+
+                #self.screenshot, self.offical_screenshot = get_target_and_legit_screenshots(self.url, self.url)
+                self.screenshot = get_target_screenshot(self.url)
+            else:
+                self.screenshot = None
+                self.offical_screenshot = None
+        except:
+            self.screenshot = None
+            self.offical_screenshot = None
+        
         self.shortening_services = r"bit\.ly|goo\.gl|shorte\.st|go2l\.ink|x\.co|" \
-            "ow\.ly|t\.co|tinyurl|tr\.im|is\.gd|cli\.gs|" \
+            r"ow\.ly|t\.co|tinyurl|tr\.im|is\.gd|cli\.gs|" \
             r"yfrog\.com|migre\.me|ff\.im|tiny\.cc|url4\.eu|twit\.ac|su\.pr|twurl\.nl|snipurl\.com|" \
             r"short\.to|BudURL\.com|ping\.fm|post\.ly|Just\.as|bkite\.com|snipr\.com|fic\.kr|loopt\.us|" \
             r"doiop\.com|short\.ie|kl\.am|wp\.me|rubyurl\.com|om\.ly|to\.ly|bit\.do|t\.co|lnkd\.in|db\.tt|" \
@@ -84,6 +111,27 @@ class FeatureExtraction:
             r"po\.st|bc\.vc|twitthis\.com|u\.to|j\.mp|buzurl\.com|cutt\.us|u\.bb|yourls\.org|x\.co|" \
             r"prettylinkpro\.com|scrnch\.me|filoops\.info|vzturl\.com|qr\.net|1url\.com|tweez\.me|v\.gd|" \
             r"tr\.im|link\.zip\.net"
+        
+        self.safe_domains = ['.edu', '.gov']
+        
+        self.malcious_content_regexs = [
+            r'((?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\.){3}(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)))', # IP Address Regex
+            r'This server could not prove that it is',
+            r'its security certificate is from',
+            r'Passw0rd', r'Password', r'Username',
+        ]
+
+        self.malcious_ocr_content_regexs = [
+            r'((?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\.){3}(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)))', # IP Address Regex
+            r'Passw0rd', r'Password', r'Username',r'Download',
+            r"Sign.*in.*to.*your.*AT&T.*Yahoo.*Mail.*Account.*here\."
+        ]
+
+    def is_online(self):
+        if self.request.text:
+            return True
+        else:
+            return False
 
     def getFeaturesDict(self):
         """
@@ -97,6 +145,7 @@ class FeatureExtraction:
         return {
             "having_IP_Address": self.having_IP_Address(),
             "URL_Length": self.URL_Length(),
+            "URL_Depth": self.URL_Depth(),
             "Shortining_Service": self.Shortining_Service(),
             "having_At_Symbol": self.having_At_Symbol(),
             "double_slash_redirecting": self.double_slash_redirecting(),
@@ -120,7 +169,10 @@ class FeatureExtraction:
             "Iframe": self.Iframe(),
             "age_of_domain": self.age_of_domain(),
             "DNSRecord": self.DNSRecord(),
-            "web_traffic": self.web_traffic()
+            #"web_traffic": self.web_traffic(),
+            "malicious_content": self.malicious_content(),
+            "safe_tld": self.safe_tld(),
+            "screenshot_ocr": self.screenshot_ocr()
         }
 
     def getFeaturesArray(self):
@@ -130,11 +182,11 @@ class FeatureExtraction:
         :return:
 
         Get the features for a url in the data type of an array
-
         """
         return [
             self.having_IP_Address(),
             self.URL_Length(),
+            self.URL_Depth(),
             self.Shortining_Service(),
             self.having_At_Symbol(),
             self.double_slash_redirecting(),
@@ -158,7 +210,10 @@ class FeatureExtraction:
             self.Iframe(),
             self.age_of_domain(),
             self.DNSRecord(),
-            self.web_traffic()
+            #self.web_traffic(),
+            self.malicious_content(),
+            self.safe_tld(),
+            self.screenshot_ocr()
         ]
 
     def getPageSource(self):
@@ -393,19 +448,19 @@ class FeatureExtraction:
         Computes the depth of the URL. This feature calculates the number of sub pages
         in the given url based on the '/'.
 
-        The value of feature is a numerical based on the URL.
-
-        This isn't even used in the current dataset.
-
-        TODO : Add this in the next dataset
-
+        if depth >= 6 sub pages the value of this feature is 1 (phishing) else -1 (legitimate)
+        
         """
         depth = 0
         subdirs = self.parsedurl.path.split('/')
         for subdir in subdirs:
             if subdir:
                 depth += 1
-        return depth
+        
+        if depth >= 6:
+            return 1
+        else:
+            return -1
 
     def Domain_registeration_length(self):
         """
@@ -422,8 +477,15 @@ class FeatureExtraction:
         If end period of domain < 6 months, the value of this feature is 1 (phishing) else -1 (legitimate).
 
         """
-        if self.whois is None:
+        if self.whois is None or self.whois.get('domain_name') is None:
             return 1
+
+        dns_result = get_dns_records(get_host_domain(self.url), 'A')
+        domain_on_hold = is_domain_on_hold(get_root_domain(self.url))
+        
+        if dns_result == 'nxdomain' or dns_result == 'timeout' or dns_result is None or domain_on_hold:
+            return 1
+        
 
         try:
             if type(self.whois['expiration_date']) is list:
@@ -449,7 +511,7 @@ class FeatureExtraction:
         Checks for the presence of favicon in the website. The presence of favicon in the
         website can be used as a feature to detect phishing websites.
 
-        If the website has favicon, the value assigned to this feature is 1 (phishing) or else -1 (legitimate).
+        If the website has favicon, the value assigned to this feature is -1 (legitimate) or else 1 (phishing).
 
         """
         try:
@@ -490,16 +552,18 @@ class FeatureExtraction:
         "http/https" in Domain name
 
         Checks for the presence of "http/https" in the domain part of the URL.
-        The phishers may add the “HTTPS” token to the domain part of a URL in order to trick users.
+        
+        - The phishers may add the “HTTPS” token to the domain part of a URL in order to trick users.
+        + I believe the above is not strong enough to render this valid. changed to if http = phish, https = legitimate
 
         If the URL has "http/https" in the domain part, the value assigned to
         this feature is 1 (phishing) or else -1 (legitimate).
 
         """
-        if 'https' in self.domain:
-            return 1
-        else:
+        if 'https' in self.scheme.lower():
             return -1
+        else:
+            return 1
 
     def Request_URL(self):
         """
@@ -511,7 +575,7 @@ class FeatureExtraction:
         website has been redirected. In our dataset, we find that legitimate websites have been redirected one
         time max.
 
-        On the other hand, phishing websites containing this feature have been redirected at least 4 times.
+        On the other hand, phishing websites containing this feature have been redirected at least 3 times.
 
         """
         try:
@@ -519,7 +583,7 @@ class FeatureExtraction:
                 return -1
             elif len(self.request.history) > 1 and len(self.request.history) <= 4: # used to be  NO > 1 and <= 3
                 return 0
-            else:
+            elif len(self.request.history) >= 4:
                 return 1
         except Exception as err:
             return -1
@@ -818,13 +882,85 @@ class FeatureExtraction:
         If the rank of the domain < 100000, the vlaue of this feature is 1 (phishing) else -1 (legitimate).
 
         """
+        # TODO This free service via alexa is retired
+        # Need to find a replacement or solution 
+        # or remove it from the features
+        #try:
+        #    alexadata = BeautifulSoup(requests.get(
+        #        "http://data.alexa.com/data?cli=10&dat=s&url=" + self.domain, timeout=10).content, 'lxml')
+        #    rank = int(alexadata.find('reach')['rank'])
+        #    if rank < 100000:
+        #        return -1
+        #    else:
+        #        return 1
+        #except Exception as err:
+        #    return 1
+        return 0
+    
+    def malicious_content(self):
+        """
+        malicious_content
+
+        :return:
+
+        This features measures the number of malicious keywords, misspellings,
+        and other malicious content within the HTML source code of a website
+
+        If the number of pieces of malicious content is >= 1 the value of this feature is 1 (phishing) else -1 (legtimate).
+        Exception returns as phish == 1 ; This exception triggers when the site is offline. Most phish live for a short period of time
+
+        """
+        malicious_content = 0
+
         try:
-            alexadata = BeautifulSoup(requests.get(
-                "http://data.alexa.com/data?cli=10&dat=s&url=" + self.domain, timeout=10).content, 'lxml')
-            rank = int(alexadata.find('reach')['rank'])
-            if rank < 100000:
-                return -1
-            else:
+            if self.request.text:
+                for regex in self.malcious_content_regexs:
+                    if re.findall(regex, self.request.text):
+                        malicious_content += 1
+            
+            if malicious_content >= 1:
                 return 1
-        except Exception as err:
+            else:
+                return -1
+        except Exception as exp:
+            return 1
+    
+    def safe_tld(self):
+        for tld in self.safe_domains:
+            if tld in self.domain:
+                return -1
+        return 0
+        
+    def screenshot_ocr(self):
+        if self.screenshot:
+            # Set custom config
+            custom_config = r'--oem 3 --psm 6'
+
+            target_img = cv2.imread(self.screenshot)
+
+            # Image options
+            try:
+                target_gray = get_grayscale(target_img)
+                #legit_gray = get_grayscale(legit_img)
+            except Exception as exp:
+                return 1
+            
+            #thresh = self.thresholding(gray)
+            #opening = self.opening(gray)
+            #canny = self.canny(gray)
+
+            try:
+                target_gray_text = pytesseract.image_to_string(target_gray, config=custom_config)
+            except pytesseract.pytesseract.TesseractError as exp:
+                if "Image too large" in exp:
+                    return -1
+                
+            # Compare the image text
+            if target_gray_text:
+                for mos in self.malcious_content_regexs:
+                    if mos in target_gray_text:
+                        return 1
+
+            return -1
+        else:
             return 1
